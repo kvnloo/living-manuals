@@ -2,6 +2,7 @@ name: Reference investigation (Agent Reach + REA)
 on:
   push:
     branches: [research/reference-agent-reach-rea]
+    paths: [.github/workflows/reference-investigation.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,6 +27,7 @@ jobs:
           timeout 180 agent-reach install --env=auto --system --channels=twitter >> evidence/agent-reach-install.log 2>&1
           agent-reach doctor > evidence/agent-reach-doctor.txt 2>&1
           pipx install yt-dlp > evidence/ytdlp-install.log 2>&1
+          agent-reach doctor --json > evidence/agent-reach-doctor-after-install.json 2>&1
           npm install -g rea-agents@latest > evidence/rea-install.log 2>&1
           rea --help > evidence/rea-help.txt 2>&1
           rea doctor --json > evidence/rea-doctor.json 2>&1
@@ -83,7 +85,7 @@ jobs:
           from pathlib import Path
           root=Path('evidence'); root.mkdir(exist_ok=True)
           ver=(root/'versions.txt').read_text(errors='replace') if (root/'versions.txt').exists() else ''
-          checks={'Agent Reach installed':'agent_reach=/home/' in ver,'REA installed':'rea=/opt/' in ver,'Video captured':any(root.glob('reference.*')),'REA browser discovered':(root/'rea-targets.json').exists(),'REA page inspected':(root/'rea-web-observation.json').exists()}
+          checks={'Agent Reach installed':'agent_reach=/' in ver,'REA installed':'rea=/opt/' in ver,'Video captured':any(root.glob('reference.*')),'REA browser discovered':(root/'rea-targets.json').exists(),'REA page inspected':(root/'rea-web-observation.json').exists()}
           text=['# Reference investigation','', 'Evidence artifact presence is not proof of success; check stderr and HTTP status. No private X cookies were used.','']+[f'- {key}: {"yes" if val else "no"}' for key,val in checks.items()]
           (root/'SUMMARY.md').write_text('\n'.join(text)+'\n')
           print('\n'.join(text))
