@@ -1,46 +1,53 @@
-# Roadmap — manuals into executable, reviewable 3D guides
+# Roadmap — manual evidence -> interactive assembly -> reviewed twins
 
-## 0. Done: deterministic, zero-dependency preview
+## 0. Completed: baseline and verified source investigation
 
-- [x] Browser-only procedural study with nine parts and nine states
-- [x] Reversible, scrubbable transforms and deterministic part IDs
-- [x] WebGL orbit/zoom, step navigation, playback, keyboard and responsive layout
-- [x] Authoring contract validation and fast, offline unit tests
-- [x] Attribution, safety warning, and observation ledger
+- [x] 9-state deterministic WebGL study, camera orbit/zoom and scrub
+- [x] Source/provenance ledger, MIT runtime and tests
+- [x] Reference video retrieved with `yt-dlp` and frames **actually inspected**
+- [x] REA/CDP observation of the live Ryan Sael demo; original author credited
+- [x] Separate what was observed (14 steps, two inventories, drawing/room) from what is inferred
 
-## 1. Next: evidence gathering and visual equivalence
+See [VERIFIED_REFERENCE.md](VERIFIED_REFERENCE.md). Agent Reach installed, but its anonymous X backend was not authenticated; don't claim it fetched the original tweet.
 
-- [x] Install Agent Reach and run doctor on an ephemeral GitHub runner; its X client required cookies, so public media was instead retrieved with yt-dlp and post metadata with FxTwitter/Jina
-- [x] Run REA on `https://sael.net/flatpack/`: confirmed HTTP 200, passive CDP/DOM/A11y/screenshot and 13-script static analysis
-- [x] Record directly observed 32-second video storyboard, 14-step timeline, hardware/panel totals, manual, view modes and camera behavior in [VERIFIED_REFERENCE.md](VERIFIED_REFERENCE.md)
-- [ ] Capture every step individually and test camera/animation transition equivalence with an interactive browser scenario
-- [ ] Cross-check geometry/step details against official *specific variant* assembly instructions
-- [ ] Automated browser screenshots at desktop/mobile widths and no-WebGL fallback
-- [ ] Fix discrepancies and publish a demo deployment
+## 1. Implemented: independent feature-parity experiment
 
-## 2. Manual → validated AssemblySpec
+- [x] 14 teaching states with reversible deterministic animations
+- [x] Illustrated 11-panel / 82-hardware **placeholder model**, individual fastener meshes and two inventory counters
+- [x] Room / Drawing visual modes; authored camera close-ups + manual orbit/reset
+- [x] Procedural SVG operation card showing the stage's modeled parts
+- [x] WebGL-unavailable fallback preserving user control and text
+- [x] Offline validation including invalid camera, duplicate IDs, contradictory ownership, hardware visibility
+- [x] Desktop/mobile browser regression suite in CI (strict real WebGL2) and local limited tests
 
-**Verified fidelity gap to close:** original supports 14 steps, 82 hardware and 11 panels, Room/Drawing, step-aligned manual thumbnails, fastener/tool animation and a second LACK fixture. Our 9-state / 9-part sample does not. Reimplement behavior independently, without reusing the author's JS/assets.
+**Caveat:** Model counts/placements deliberately imitate demonstration categories for a rendering experiment; they are **not** measurements, vendor inventory or instructions. No official images, documents, meshes or code are bundled. The reference's feature names do not establish behavior/visual parity.
 
-- [ ] PDF/image page reader; respect copyright, persist provenance not redistributable source
-- [ ] Visual part/hardware detection + labels + quantities + dimensions + uncertainty
-- [ ] Step graph (prerequisites, operations, human safety gates), versioned JSON schema
-- [ ] Independent deterministic validations: unique IDs, tolerances, BOM coverage, conflicts, graph acyclicity, collision/clearance checks
-- [ ] Review UI allowing a person to correct extracted part count, transform, graph, safety warnings
-- [ ] Never mark an inferred operation verified without source and reviewer
+## 2. Next: browser visual QA and accurate reference provenance
 
-## 3. Geometry providers, then reuse everywhere
+- [ ] Review GitHub Actions browser screenshots at desktop and mobile sizes with real WebGL2; fix any gaps
+- [ ] Verify camera/drag/wheel/pinch/keyboard behavior on real mobile touch hardware
+- [ ] Add subtle tool representation and in-scene alignment callouts, without inventing assembly steps
+- [ ] Measure draw-call count, p50/p95 frame intervals and rendering throughput for many hardware pieces
+- [ ] Match camera transitions against time-coded observed scenes, while retaining accessible alternatives
+- [ ] Deploy static preview, archive screenshot diff and performance budget in the canonical issue
 
-- [ ] Adapter to **img2threejs** for procedural part shape and animation-ready pivots
-- [ ] Optional Three.js + glTF/GLB loader for user-owned/licensed CAD assets; no involuntary scraping
-- [ ] Model-quality gates: exact dimensions when verified, topology/contacts, repeatability, runtime budget
-- [ ] Camera keyframes, ghost parts, socket/fastener details, exploded views, highlighting and AR handoff
-- [ ] Export JSON timeline and optional glTF/GLB for ACE / built-environment twins / construction demos
+## 3. Source-backed assembly specifications
 
-## Success criteria
+- [ ] Choose exact product and manual version (manufacturer document link, SKU, dimensions)
+- [ ] Human-review the real BOM, geometry, hardware category and operation sequence
+- [ ] Define versioned `AssemblySpec` JSON Schema; evidence/provenance fields per part and safety prerequisite
+- [ ] Validate step DAG, dimensions, ID uniqueness, bill-of-materials coverage, pose and socket tolerances
+- [ ] PDF/image importer proposes candidates with uncertainty; preserve legal source link rather than source assets
+- [ ] Review UI for ambiguous connections, fastener counts, instructions and anchoring rules
+- [ ] Explicit release gate: do not label any physical assembly instructions *verified* without human approval
 
-- **Correctness:** each assembly operation explains why/where a part moves; explicit uncertainty and manual version.
-- **Repeatability:** same AssemblySpec → identical transforms at any normalized step time.
-- **Usability:** play, reverse, skip, mobile and keyboard work with low latency.
-- **Safety:** no invented fastener or anchoring instruction; manufacturer documents govern real assembly.
-- **Provenance:** every source, borrowed asset, contributor and original author receives credit.
+## 4. Geometry integrations and reuse
+
+- [ ] `img2threejs` procedural geometry provider with deterministic scene contract
+- [ ] User-owned or expressly licensed glTF/GLB/CAD adapters
+- [ ] Automatic collision/clearance checks and physical scale gate
+- [ ] Export JSON operation timelines for ACE, construction twins and spatial training
+
+## Safety and source integrity
+
+The 14-stage study is exploratory UX, **not** the IKEA assembly sequence. Use official product instructions and correct wall anchoring for actual furniture. Cite original creators and separate observed facts from assumptions. No authentication cookies, copyrighted original video/manual artwork or proprietary source in git.

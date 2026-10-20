@@ -1,0 +1,29 @@
+name: Browser acceptance (3D + fallback)
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  desktop-mobile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test-only browser tooling
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Test real WebGL2 plus fallback at desktop and mobile sizes
+        run: python tests/browser_smoke.py --output browser-artifacts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-acceptance
+          path: browser-artifacts/
+          retention-days: 3
