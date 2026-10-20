@@ -51,3 +51,29 @@ See [VERIFIED_REFERENCE.md](VERIFIED_REFERENCE.md). Agent Reach installed, but i
 ## Safety and source integrity
 
 The 14-stage study is exploratory UX, **not** the IKEA assembly sequence. Use official product instructions and correct wall anchoring for actual furniture. Cite original creators and separate observed facts from assumptions. No authentication cookies, copyrighted original video/manual artwork or proprietary source in git.
+
+## 2026-10-20 continuation: multi-project runtime and feature coverage
+
+- [x] Merge PR #3 after both desktop/mobile and strict WebGL CI passed.
+- [x] Build generic `AssemblySpec` v1 validation and import/export with explicit
+  `illustrative`/human-review-only state.
+- [x] Author five procedural sample projects: BILLY, LACK-inspired table,
+  doghouse, fence bay, PC. All parts/steps authored independently.
+- [x] Track project phases, prerequisite graph, material category counters and
+  tool cue target data; reject invalid or unsafe-by-claim JSON.
+- [x] Add tool meshes, close-up cameras, orbit/pinch, contextual room/drawing,
+  modal manual with independent per-step schematic and click-to-jump.
+- [x] Add 15 deterministic Node tests and desktop/mobile/fallback cross-project
+  Playwright acceptance paths (local limited-WebGL PASS; strict CI pending).
+- [ ] Compare rendering screenshots against original scene behavior, not just
+  successful WebGL initialization or equal step numbers.
+- [ ] Source-review a single real *variant-specific* manual with permitted use
+  and explicit safety prerequisite approval. No copies of vendor art in repo.
+- [ ] Add measured performance budgets for hundreds to thousands of parts,
+  instanced batches, parts grouping, tools/materials manifest and CAD adapters.
+- [ ] Plan PDF/image candidate extraction with deterministic schema review,
+  uncertainty + citation per inferred operation, and human approval.
+
+Feature coverage is tracked in [PARITY.md](PARITY.md). Visual/physical parity
+is **not** achieved by matching control names alone. Never label this a working
+construction plan until source/engineering review gates are met.

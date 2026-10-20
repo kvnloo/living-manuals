@@ -1,6 +1,6 @@
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const fields = ['x', 'y', 'z'];
-const kinds = new Set(['panel', 'hardware']);
+const kinds = new Set(['panel', 'hardware', 'fixture', 'component', 'material']);
 const shapes = new Set(['box', 'cylinder']);
 
 export function validateManual(manual) {
@@ -17,7 +17,7 @@ export function validateManual(manual) {
     stepIds.add(step.id);
     if (!Array.isArray(step.parts)) errors.push(`Step ${step.id} needs a parts array`);
     const c = step.camera;
-    if (c && (!['theta', 'phi', 'distance', 'y'].every(k => finite(c[k])) || c.phi <= 0 || c.phi >= Math.PI || c.distance < 1.5)) {
+    if (c && (!['theta', 'phi', 'distance', 'y'].every(k => finite(c[k])) || (c.x !== undefined && !finite(c.x)) || (c.z !== undefined && !finite(c.z)) || c.phi <= 0 || c.phi >= Math.PI || c.distance < 0.25)) {
       errors.push(`Bad camera for step ${step.id}`);
     }
   }
@@ -27,9 +27,9 @@ export function validateManual(manual) {
     ids.add(p.id);
     if (!kinds.has(p.kind)) errors.push(`Bad kind ${p.id}`);
     if (!shapes.has(p.shape)) errors.push(`Bad shape ${p.id}`);
-    if (!Array.isArray(p.size) || p.size.length !== 3 || !p.size.every(n => finite(n) && n > 0)) errors.push(`Bad size ${p.id}`);
+    if (!Array.isArray(p.size) || p.size.length !== 3 || !p.size.every(n => finite(n) && n > 0 && n < 1000)) errors.push(`Bad size ${p.id}`);
     for (const pose of ['start', 'end']) {
-      if (!p[pose] || !fields.every(k => finite(p[pose][k]))) errors.push(`Bad ${pose} pose ${p.id}`);
+      if (!p[pose] || !fields.every(k => finite(p[pose][k]) && Math.abs(p[pose][k]) <= 1000)) errors.push(`Bad ${pose} pose ${p.id}`);
       for (const k of ['ry', 'rz']) if (p[pose] && p[pose][k] !== undefined && !finite(p[pose][k])) errors.push(`Bad angle ${p.id}`);
     }
     if (!Number.isInteger(p.installStep) || p.installStep < 1 || p.installStep >= manual.steps.length) errors.push(`Bad installStep ${p.id}`);
@@ -69,6 +69,7 @@ export function installedCount(manual, stage) {
 export function inventoryAtStage(manual, stage) {
   const result = {panel: {installed: 0, total: 0}, hardware: {installed: 0, total: 0}};
   for (const part of manual.parts) {
+    result[part.kind] ??= {installed:0, total:0};
     result[part.kind].total++;
     if (installationFraction(part, stage) === 1) result[part.kind].installed++;
   }

@@ -70,7 +70,10 @@ const panels = [
 const ids = objects => objects.map(object => object.id);
 const camera = (theta, phi, distance, y = 1.05) => ({theta, phi, distance, y});
 export const bookcase = {
+  schemaVersion:1,
   id: 'bookcase-study-v2',
+  shortTitle:'BILLY', category:'furniture',
+  review:{status:'illustrative',requiresHumanApproval:true},
   title: 'BILLY / Bookcase study',
   subtitle: 'A visual experiment, not manufacturer instructions',
   source: {creator: 'Ryan Sael', url: 'https://x.com/RyanSael/status/2112178744937103607'},
@@ -80,18 +83,18 @@ export const bookcase = {
   parts: [...panels, ...dowels, ...bolts, ...locks, ...nails, ...pins],
   steps: [
     {id: 'overview', title: 'Examine the parts', detail: 'Explore an exploded model. All quantities and placements are illustrative, not a verified kit inventory.', parts: [], hint: 'Orbit or select a stage', camera: camera(.67, 1.14, 3.7)},
-    {id: 'dowels', title: 'Locate the dowels', detail: 'Watch an illustrative group of small alignment pieces move into place; check your own official manual for real positions.', parts: ids(dowels), hint: '12 illustrative dowels', camera: camera(.8, 1.2, 2.6, .8)},
-    {id: 'cam-bolts', title: 'Introduce cam bolts', detail: 'Inspect small connector geometry in a close-up. The depicted number and arrangement are not a hardware checklist.', parts: ids(bolts), hint: '12 illustrative bolts', camera: camera(1.05, 1.12, 2.25, .75)},
+    {id: 'dowels', phase:'Connect', title: 'Locate the dowels', detail: 'Watch an illustrative group of small alignment pieces move into place; check your own official manual for real positions.', parts: ids(dowels), hint: '12 illustrative dowels', camera: camera(.8, 1.2, 2.6, .8)},
+    {id: 'cam-bolts', phase:'Connect', tool:{kind:'driver',target:'bolt-01',action:'turn'}, title: 'Introduce cam bolts', detail: 'Inspect small connector geometry in a close-up. The depicted number and arrangement are not a hardware checklist.', parts: ids(bolts), hint: '12 illustrative bolts', camera: camera(1.05, 1.12, 2.25, .75)},
     {id: 'base', title: 'Set the base panel', detail: 'The lower board moves to its parametric position; this is a spatial explanation, not a procedural instruction.', parts: ['base'], hint: 'Frame reference', camera: camera(.7, 1.1, 2.9, .65)},
     {id: 'sides', title: 'Introduce both sides', detail: 'The upright panels establish the width of the bookcase study.', parts: ['left', 'right'], hint: 'Two matching uprights', camera: camera(.67, 1.12, 3.35)},
-    {id: 'locks', title: 'Illustrate cam connections', detail: 'The connectors move near selected panel joints to demonstrate motion and scale, not actual tightening.', parts: ids(locks), hint: 'Illustrative fasteners', camera: camera(.91, 1.2, 2.35, .6)},
+    {id: 'locks', phase:'Connect', tool:{kind:'driver',target:'lock-01',action:'turn'}, title: 'Illustrate cam connections', detail: 'The connectors move near selected panel joints to demonstrate motion and scale, not actual tightening.', parts: ids(locks), hint: 'Illustrative fasteners', camera: camera(.91, 1.2, 2.35, .6)},
     {id: 'fixed', title: 'Place the fixed shelf', detail: 'A horizontal reference shelf moves between the two sides.', parts: ['fixed'], hint: 'Internal landmark', camera: camera(.7, 1.08, 2.9, 1.02)},
     {id: 'top', title: 'Close the outer frame', detail: 'The top board moves into its final position in the model.', parts: ['top'], hint: 'Frame silhouette', camera: camera(.76, 1.15, 3.4)},
     {id: 'back', title: 'Introduce the back panel', detail: 'Orbit or reframe the scene to see the thin rear panel.', parts: ['back'], hint: 'Rear view', camera: camera(3.1, 1.16, 3.05)},
-    {id: 'back-nails', title: 'Study rear fixings', detail: 'A set of small nail shapes illustrates how the rear face can be explained in 3D.', parts: ids(nails), hint: '26 illustrative nails', camera: camera(3.1, 1.17, 2.6)},
+    {id: 'back-nails', phase:'Fixings', tool:{kind:'hammer',target:'nail-01',action:'tap'}, title: 'Study rear fixings', detail: 'A set of small nail shapes illustrates how the rear face can be explained in 3D.', parts: ids(nails), hint: '26 illustrative nails', camera: camera(3.1, 1.17, 2.6)},
     {id: 'shelf-pins', title: 'Place shelf supports', detail: 'Illustrative shelf-pin shapes become visible before the adjustable shelves.', parts: ids(pins), hint: '20 illustrative supports', camera: camera(.85, 1.22, 2.6)},
     {id: 'lower-shelves', title: 'Add lower shelves', detail: 'Two free-height shelves slide into the parametric model.', parts: ids(shelves.slice(0, 2)), hint: 'Two shelves', camera: camera(.67, 1.18, 3.15, .7)},
     {id: 'upper-shelves', title: 'Complete the shelf layout', detail: 'The remaining shelves align to the example positions.', parts: ids(shelves.slice(2)), hint: 'Three more shelves', camera: camera(.67, 1.13, 3.7)},
-    {id: 'safety', title: 'Finish with the official manual', detail: 'For physical assembly and wall anchoring, use the correct manufacturer instructions, safety hardware and product variant.', parts: [], hint: 'Verification required before assembly', safety: true, camera: camera(.67, 1.14, 3.9)},
+    {id: 'safety', phase:'Safety', caution:'Follow product-specific instructions and wall anchoring requirements.', title: 'Finish with the official manual', detail: 'For physical assembly and wall anchoring, use the correct manufacturer instructions, safety hardware and product variant.', parts: [], hint: 'Verification required before assembly', safety: true, camera: camera(.67, 1.14, 3.9)},
   ],
 };

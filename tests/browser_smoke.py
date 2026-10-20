@@ -119,7 +119,63 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                         # never reports a lost context or uncaught JS exception.
                         assert page.locator('#viewer').evaluate('(c) => c.width > 0 && c.height > 0')
                     page.screenshot(path=str(output/f'{name}.png'), full_page=True)
-                    assert not errors, f'{name} uncaught page exceptions: {errors}'
+                    # The same engine must render and navigate real, independently
+                    # authored furniture, construction, outdoor and PC concepts.
+                    studies = [
+                        ('table-concept',5,13),
+                        ('doghouse-concept',8,11),
+                        ('fence-concept',8,28),
+                        ('pc-concept',10,15),
+                    ]
+                    for study, steps, parts in studies:
+                        page.locator(f'[data-project-id="{study}"]').click()
+                        assert page.evaluate('document.body.dataset.project') == study
+                        assert page.locator('.step').count() == steps
+                        assert int(page.locator('#scrub').get_attribute('max')) == steps-1
+                        assert page.locator('#manual-open').is_visible()
+                        assert page.locator('.project-option[aria-pressed="true"]').count() == 1
+                        # The generated manual is a separate accessible overlay,
+                        # not the vendor's unlicensed artwork.
+                        page.locator('#manual-open').click()
+                        assert page.locator('#manual-dialog').is_visible()
+                        assert page.locator('.manual-card').count() == steps
+                        page.locator('.manual-card').nth(1).locator('button').click()
+                        assert not page.locator('#manual-dialog').is_visible()
+                        assert page.locator('.step').nth(1).get_attribute('aria-current') == 'step'
+                        page.locator('#view-drawing').click()
+                        assert page.evaluate('document.body.dataset.viewMode') == 'drawing'
+                        page.locator('#view-room').click()
+                        for step_index in range(steps):
+                            selected = page.locator('.step').nth(step_index)
+                            selected.click()
+                            assert selected.get_attribute('aria-current') == 'step'
+                            assert page.locator('#current-title').inner_text() == selected.locator('.step-title').inner_text()
+                        page.locator('#scrub').fill(str(steps-1))
+                        page.wait_for_function("""() => Array.from(document.querySelectorAll('.inventory-counters span')).every(el => {const [installed,total]=el.textContent.trim().split(' / ');return Number(installed)===parseInt(total)})""", timeout=9000)
+                        complete = page.locator('#inventory-counters span').all_text_contents()
+                        assert sum(int(x.split('/')[1].split()[0]) for x in complete) == parts
+                        assert 'review' in page.locator('#project-warning').inner_text().lower() or 'never' in page.locator('#project-warning').inner_text().lower()
+                        page.screenshot(path=str(output/f'{name}-{study}.png'),full_page=True)
+                        page.locator('#scrub').fill('0')
+                        page.wait_for_function("""() => Array.from(document.querySelectorAll('.inventory-counters span')).every(el => el.textContent.trim().startsWith('0 / '))""", timeout=9000)
+                        assert page.evaluate('document.documentElement.scrollWidth') <= width, f'{name}/{study} horizontal scroll'
+                        assert page.evaluate('document.body.dataset.renderReady') == ready
+                    # Export a concept then import it through the same guarded UI.
+                    with page.expect_download() as download_info:
+                        page.locator('#export-project').click()
+                    download = download_info.value
+                    exported = output/f'{name}-export.json'
+                    download.save_as(exported)
+                    assert 'illustrative' in exported.read_text().lower()
+                    page.locator('#import-project').set_input_files(str(exported))
+                    assert 'UNVERIFIED' in page.locator('#project-message').inner_text()
+                    page.locator('#import-project').set_input_files({
+                        'name': 'invalid.json', 'mimeType': 'application/json',
+                        'buffer': b'{"schemaVersion":1,"review":{"status":"verified"}}'
+                    })
+                    assert 'rejected' in page.locator('#project-message').inner_text().lower()
+                    page.locator('[data-project-id="bookcase-study-v2"]').click()
+                    assert not errors, f'{name} uncaught page exceptions: {errors}' 
                     print(f'{name}: PASS (WebGL2={ready}, all 14 states, scrubbing, modes, counters, layout)')
                     page.close()
 
@@ -134,7 +190,14 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                 fallback.locator('#next').click()
                 assert fallback.locator('#current-title').inner_text() == 'Locate the dowels'
                 assert fallback.locator('#schematic circle').count() == 12
-                print('no-WebGL fallback: PASS (still navigable and illustrated)')
+                fallback.locator('[data-project-id="fence-concept"]').click()
+                assert fallback.locator('.step').count() == 8
+                assert fallback.locator('#viewer-fallback').is_visible()
+                assert fallback.locator('#fallback-svg rect').count() > 0
+                fallback.locator('#manual-open').click()
+                assert fallback.locator('.manual-card').count() == 8
+                fallback.locator('.manual-dialog-head button').click()
+                print('no-WebGL fallback: PASS (project switching and independent manuals still work)')
                 fallback.close()
             finally:
                 browser.close()
