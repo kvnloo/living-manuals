@@ -1,48 +1,64 @@
 # Living Manuals
 
-**Evidence-first, interactive 3D assembly guides.** A browser-only proof of concept that animates parts between a documented exploded layout and their final placement, with reversible scrubbing and orbit controls.
-
-[Original inspiration: Ryan Sael's interactive BILLY demo](https://x.com/RyanSael/status/2112178744937103607) · [Try Ryan's original](https://sael.net/flatpack)
+**Evidence-first, reversible 3D assembly explanations.** An independent, zero-dependency browser study that animates individually tracked panels and illustrative hardware. Inspired by [Ryan Sael's BILLY demo](https://x.com/RyanSael/status/2112178744937103607) ([live original](https://sael.net/flatpack/)).
 
 ## Run
 
 ```bash
 python3 -m http.server 4173
-# visit http://localhost:4173
-node --test tests/*.test.js
+# Open http://localhost:4173
+npm run check
 ```
 
-No bundler, paid API, cookies, downloads, model weights, or JavaScript dependencies are required for the example. A WebGL 2 browser is needed for the 3D canvas. Use arrow keys or the step list, drag to orbit, scroll to zoom, use the scrubber to move backwards and forwards, and hit Play for the sequence.
+No build tool, account, API token, package install, model download, or copied manufacturer assets are required for the runtime. Requires WebGL 2 for the interactive 3D model; an accessible static elevation, operation descriptions, and all navigation remain available when WebGL 2 is unavailable.
 
-## Status
+## Implemented
 
-- **Implemented:** a parametric nine-part bookcase approximation, nine pedagogical states (including intro and safety), procedural cuboids, GPU rendering, camera controls, animation timeline, playback, responsive controls, reduced-motion support, validation, tests.
-- **Not implemented:** PDF/image ingestion, exact recreation of the real IKEA assembly manual, fastener-level geometry, matching the original demonstration's source/behavior, automatic part inference, GLB import, safety certification.
-- **Caution:** this sample is **not** an assembly manual. Consult official instructions and wall-anchoring requirements before building furniture.
+- **14 fully reversible illustrated states**, with next/previous, slider, playback, arrow-key navigation, reduced-motion support and deterministic scrub interpolation.
+- **11 parametric panels + 82 separately rendered pieces of hardware** (dowels, connectors, rear fasteners and shelf supports). Both counts are **illustrative demo props**, not the inventory, hole positions or assembly order of any real IKEA product.
+- Procedural box and cylinder geometry in a dependency-free WebGL2 viewer; future hardware stays out of the exploded view until its demonstration step.
+- **Room / Drawing** rendering modes, camera close-up presets by step, free orbit/zoom and reframe.
+- An independent front-elevation SVG generated directly from the authored scene graph, linked to each step without copying manufacturer diagrams.
+- Mobile layout, per-category installation counters, safety warnings and an accessible **no-WebGL fallback**.
+- Deterministic validation for missing/duplicate parts, category/shape errors, invalid cameras, bad transforms and inconsistent installation ownership.
+- Node unit tests and a real-browser Playwright acceptance path that exercises desktop, mobile, no-WebGL and drawing/room modes.
 
-The sample's panel placements and order are illustrative. The `BILLY` label identifies the design study; it does not imply affiliation or verified manufacturer geometry. No IKEA drawings, assets, code, models, or documents are copied into this repository.
+**Not built:** manufacturer-verified fastener geometry, PDF/image ingestion, real manual diagrams, automatic recognition, glTF, exact original-demo reproduction or safety certification. The sample must never be used to assemble real furniture. Locate the correct manufacturer instructions and wall-anchoring hardware for your specific product.
+
+## Verification
+
+```bash
+npm run check
+# Browser acceptance suite requires Python Playwright + Chromium:
+python3 -m pip install playwright==1.55.0
+python3 -m playwright install chromium
+python3 tests/browser_smoke.py
+```
+
+A restricted local browser without WebGL can run a limited UI-only check using `python3 tests/browser_smoke.py --inline --allow-no-webgl`; this **does not verify 3D output**. The [dedicated CI workflow](.github/workflows/browser.yml) requires real WebGL2 and exports desktop/mobile screenshots. Reference research is independently recorded in [docs/VERIFIED_REFERENCE.md](docs/VERIFIED_REFERENCE.md) and in [the reproducible Actions investigation](.github/workflows/reference-investigation.yml). Agent Reach's anonymous X backend was not authenticated; the public video was retrieved via `yt-dlp` and the live website inspected with REA/CDP. Credit belongs to original creator **Ryan Sael**.
 
 ## Architecture
 
-| Module | Purpose |
+| Area | Contract |
 |---|---|
-| `src/catalog/billy.js` | Declarative part dimensions, initial/final transforms, step association, human-readable hints |
-| `src/core/assembly.js` | Validates the full part graph, computes reversible pose interpolation; **deterministic** |
-| `src/core/matrix.js` | Small matrix kernel |
-| `src/engine/webgl.js` | Self-contained WebGL2 preview rendering; no model downloads |
-| `src/main.js` | Step navigation, playback, accessibility and viewer coordination |
-| `docs/RESEARCH.md` | Sources, what was observed, what remains unverified |
-| `docs/ROADMAP.md` | Extraction → review → assembly-engine roadmap and integration decisions |
+| `src/catalog/billy.js` | Illustrative source-labeled geometry, inventory and camera keyframes; *not* vendor data |
+| `src/core/assembly.js` | Deterministic validation, category counters, visibility and interpolation |
+| `src/core/elevation.js` | Independent vector schematic from authored geometry |
+| `src/core/matrix.js` | Self-contained column-major matrix math |
+| `src/engine/webgl.js` | Box/cylinder rendering, camera and drawing/room modes |
+| `src/main.js` | Timeline controls, accessible DOM and fallback coordination |
+| `tests/` | Unit invariants and full-browser acceptance with intentional WebGL failure |
+| `docs/` | Evidence and provenance, human safety gates and remaining roadmap |
 
-### Why a separate repo?
+## Why its own repo?
 
-This repo owns **manual understanding, assembly semantics, timeline UX and validation**. Geometry providers are plugins later: [img2threejs](https://github.com/kvnloo/img2threejs) for agent-generated procedural shapes, [Three.js](https://threejs.org/) / glTF for production runtime, optional legally usable CAD/GLB assets. It does not fork an existing author demo or duplicate the reverse-engineering and social retrieval tools.
+Living Manuals owns **assembly semantics, verification and interaction UX**. Geometry is a replaceable subsystem. A future provider can use [img2threejs](https://github.com/kvnloo/img2threejs), user-licensed glTF/CAD or explicit procedural primitives, after geometry/provenance review. No proprietary original implementation or assembly drawings are copied.
 
-## Proposed ingestion contract
+## Manual ingestion (planned)
 
-Input is a manual document or a reference plus an evidence record. An agent may propose `parts[]`, `steps[]`, camera keyframes, and geometry. A deterministic validator checks ID uniqueness, step ownership, dimensions, finite transforms, and referential integrity. A human validates safety-sensitive actions, fit and tolerances before anyone may treat it as authoritative. The output is a versioned `AssemblySpec` plus a 3D replay; unknowns remain unknown rather than being hallucinated.
+Document -> candidate BOM and geometry -> evidence-tagged dependency graph -> deterministic validation -> human review of ambiguous or safety-related steps -> versioned `AssemblySpec` -> interactive guide. Unknowns remain unknown; a polished scene cannot certify assembly correctness.
 
-See the [verified 32-second source video and REA investigation](docs/VERIFIED_REFERENCE.md), [research notes](docs/RESEARCH.md), [roadmap](docs/ROADMAP.md) and [attribution](docs/PROVENANCE.md).
+See [research](docs/RESEARCH.md), [roadmap](docs/ROADMAP.md) and [attribution](docs/PROVENANCE.md).
 
 ## License
 
