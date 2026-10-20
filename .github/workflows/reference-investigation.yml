@@ -1,0 +1,96 @@
+name: Reference investigation (Agent Reach + REA)
+on:
+  push:
+    branches: [research/reference-agent-reach-rea]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+      - name: Install upstream Agent Reach and REA tools
+        shell: bash
+        run: |
+          mkdir -p evidence
+          set +e
+          node --version > evidence/versions.txt 2>&1
+          python3 --version >> evidence/versions.txt 2>&1
+          pipx install https://github.com/Panniantong/agent-reach/archive/main.zip > evidence/agent-reach-install.log 2>&1
+          export PATH="$HOME/.local/bin:$PATH"
+          timeout 180 agent-reach install --env=auto --system --channels=twitter >> evidence/agent-reach-install.log 2>&1
+          agent-reach doctor > evidence/agent-reach-doctor.txt 2>&1
+          pipx install yt-dlp > evidence/ytdlp-install.log 2>&1
+          npm install -g rea-agents@latest > evidence/rea-install.log 2>&1
+          rea --help > evidence/rea-help.txt 2>&1
+          rea doctor --json > evidence/rea-doctor.json 2>&1
+          printf 'agent_reach=%s\nrea=%s\nyt_dlp=%s\n' "$(command -v agent-reach)" "$(command -v rea)" "$(command -v yt-dlp)" >> evidence/versions.txt
+          exit 0
+      - name: Retrieve public original post and inspect available video
+        shell: bash
+        run: |
+          mkdir -p evidence
+          export PATH="$HOME/.local/bin:$PATH"
+          set +e
+          URL='https://x.com/RyanSael/status/2112178744937103607'
+          timeout 60 twitter tweet "$URL" > evidence/twitter-post.txt 2>&1
+          timeout 60 yt-dlp --no-playlist --dump-single-json "$URL" > evidence/ytdlp-info.json 2> evidence/ytdlp-errors.txt
+          timeout 90 yt-dlp --no-playlist --max-filesize 45M -f 'bv*+ba/b' -o 'evidence/reference.%(ext)s' "$URL" > evidence/ytdlp-download.log 2>&1
+          for name in jina fx vxt syndication; do
+            case "$name" in
+              jina) api='https://r.jina.ai/https://x.com/RyanSael/status/2112178744937103607';;
+              fx) api='https://api.fxtwitter.com/RyanSael/status/2112178744937103607';;
+              vxt) api='https://api.vxtwitter.com/RyanSael/status/2112178744937103607';;
+              syndication) api='https://cdn.syndication.twimg.com/tweet-result?id=2112178744937103607&lang=en';;
+            esac
+            timeout 20 curl -LsS --max-time 15 -w '\nHTTP_STATUS:%{http_code}\n' "$api" > "evidence/${name}.txt" 2>&1
+          done
+          curl -ILsS --max-time 15 https://sael.net/flatpack > evidence/flatpack-headers.txt 2>&1
+          exit 0
+      - name: Inspect site candidate via REA Chrome DevTools Protocol
+        shell: bash
+        run: |
+          mkdir -p evidence
+          set +e
+          export PATH="$HOME/.local/bin:$PATH"
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          if [ -z "$BROWSER" ] || ! command -v rea >/dev/null; then
+            echo 'REA or Chrome unavailable' > evidence/rea-web-error.txt
+            exit 0
+          fi
+          "$BROWSER" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/living-manuals-rea-browser 'https://sael.net/flatpack' > evidence/chrome.log 2>&1 &
+          BROWSER_PID=$!
+          trap 'kill "$BROWSER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:9222/json/list > evidence/chrome-targets.json 2>/dev/null && break; sleep 1; done
+          rea list-browser-targets http://127.0.0.1:9222 --json > evidence/rea-targets.json 2>&1
+          TARGET_ID="$(python3 -c "import json; a=json.load(open('evidence/chrome-targets.json')); print(next((i['id'] for i in a if i.get('type')=='page'),''))" 2>/dev/null)"
+          if [ -n "$TARGET_ID" ]; then
+            timeout 40 rea inspect-web-page http://127.0.0.1:9222 "$TARGET_ID" --include-accessibility-text --json > evidence/rea-web-observation.json 2>&1
+            timeout 100 rea analyze-web-bundle http://127.0.0.1:9222 "$TARGET_ID" --json > evidence/rea-bundle.json 2>&1
+            timeout 30 rea capture-web-screenshot http://127.0.0.1:9222 "$TARGET_ID" --json > evidence/rea-screenshot.json 2>&1
+          fi
+          exit 0
+      - name: Summarize
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('evidence'); root.mkdir(exist_ok=True)
+          ver=(root/'versions.txt').read_text(errors='replace') if (root/'versions.txt').exists() else ''
+          checks={'Agent Reach installed':'agent_reach=/home/' in ver,'REA installed':'rea=/opt/' in ver,'Video captured':any(root.glob('reference.*')),'REA browser discovered':(root/'rea-targets.json').exists(),'REA page inspected':(root/'rea-web-observation.json').exists()}
+          text=['# Reference investigation','', 'Evidence artifact presence is not proof of success; check stderr and HTTP status. No private X cookies were used.','']+[f'- {key}: {"yes" if val else "no"}' for key,val in checks.items()]
+          (root/'SUMMARY.md').write_text('\n'.join(text)+'\n')
+          print('\n'.join(text))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-reference-investigation
+          path: evidence/
+          retention-days: 3
