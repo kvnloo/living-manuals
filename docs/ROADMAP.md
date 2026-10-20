@@ -10,14 +10,17 @@
 
 ## 1. Next: evidence gathering and visual equivalence
 
-- [ ] Use Agent Reach with the authorized public X post; archive link, quote, clip metadata, date and credit
-- [ ] Use REA's passive, allowlisted local CDP observation on `https://sael.net/flatpack`
-- [ ] Record a behavior matrix: step changes, camera, scrubbing, highlighting, accessibility, viewport
+- [x] Install Agent Reach and run doctor on an ephemeral GitHub runner; its X client required cookies, so public media was instead retrieved with yt-dlp and post metadata with FxTwitter/Jina
+- [x] Run REA on `https://sael.net/flatpack/`: confirmed HTTP 200, passive CDP/DOM/A11y/screenshot and 13-script static analysis
+- [x] Record directly observed 32-second video storyboard, 14-step timeline, hardware/panel totals, manual, view modes and camera behavior in [VERIFIED_REFERENCE.md](VERIFIED_REFERENCE.md)
+- [ ] Capture every step individually and test camera/animation transition equivalence with an interactive browser scenario
 - [ ] Cross-check geometry/step details against official *specific variant* assembly instructions
 - [ ] Automated browser screenshots at desktop/mobile widths and no-WebGL fallback
 - [ ] Fix discrepancies and publish a demo deployment
 
 ## 2. Manual → validated AssemblySpec
+
+**Verified fidelity gap to close:** original supports 14 steps, 82 hardware and 11 panels, Room/Drawing, step-aligned manual thumbnails, fastener/tool animation and a second LACK fixture. Our 9-state / 9-part sample does not. Reimplement behavior independently, without reusing the author's JS/assets.
 
 - [ ] PDF/image page reader; respect copyright, persist provenance not redistributable source
 - [ ] Visual part/hardware detection + labels + quantities + dimensions + uncertainty
