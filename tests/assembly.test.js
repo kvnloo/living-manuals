@@ -45,8 +45,9 @@ test('progressive stages cannot uninstall earlier pieces or decrease category co
 });
 test('future hardware stays hidden until its own transition and later remains visible',()=>{
   for(const part of bookcase.parts.filter(p=>p.kind==='hardware')){
-    assert.equal(visibleAtStage(part,0),part.installStep===1);
-    assert.equal(visibleAtStage(part,part.installStep-1),true);
+    assert.equal(visibleAtStage(part,0),false);
+    assert.equal(visibleAtStage(part,part.installStep-1),false);
+    assert.equal(visibleAtStage(part,part.installStep-.5),true);
     assert.equal(visibleAtStage(part,last),true);
   }
   assert.ok(bookcase.parts.filter(p=>p.kind==='panel').every(p=>visibleAtStage(p,0)));

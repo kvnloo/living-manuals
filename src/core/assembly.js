@@ -77,7 +77,7 @@ export function inventoryAtStage(manual, stage) {
 export function visibleAtStage(part, stage) {
   // Keep large panels in the exploded view, but don't swamp the scene with
   // 82 unplaced fasteners. Hardware appears just before its insertion step.
-  return part.kind !== 'hardware' || stage >= part.installStep - 1;
+  return part.kind !== 'hardware' || stage > part.installStep - 1;
 }
 export function activeStepIndex(manual, stage) {
   return clamp(Math.round(stage), 0, manual.steps.length - 1);

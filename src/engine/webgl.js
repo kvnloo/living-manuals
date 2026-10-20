@@ -152,7 +152,10 @@ export function makeViewer(canvas, manual) {
     if (canvas.width!==w || canvas.height!==h) {canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     const center=[0,centerY,0];
-    const eye=[center[0]+distance*Math.sin(phi)*Math.sin(theta),center[1]+distance*Math.cos(phi),center[2]+distance*Math.sin(phi)*Math.cos(theta)];
+    // Portrait viewports need a wider framing without modifying saved camera
+    // presets; avoid cropping the outer exploded panels on small screens.
+    const frameDistance=distance*Math.max(1,Math.min(1.7,1.5/(w/h)));
+    const eye=[center[0]+frameDistance*Math.sin(phi)*Math.sin(theta),center[1]+frameDistance*Math.cos(phi),center[2]+frameDistance*Math.sin(phi)*Math.cos(theta)];
     const vp=multiply(perspective(43*Math.PI/180,w/h,.05,30),lookAt(eye,center));
     gl.useProgram(p);
     const focus=new Set(activeParts);
