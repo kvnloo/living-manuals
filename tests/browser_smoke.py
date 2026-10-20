@@ -69,7 +69,8 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                       '--ignore-gpu-blocklist','--use-gl=angle','--use-angle=swiftshader'])
             try:
                 for name, width, height in [('desktop', 1440, 900), ('mobile', 390, 844)]:
-                    page = browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
+                    page = browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1,
+                                           is_mobile=name=='mobile',has_touch=name=='mobile')
                     errors = []
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     if inline:
@@ -91,13 +92,25 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                     page.locator('#view-drawing').click()
                     assert page.locator('#view-drawing').get_attribute('aria-pressed') == 'true'
                     assert page.evaluate('document.body.dataset.viewMode') == 'drawing'
+                    page.locator('#scrub').fill('8')
+                    page.wait_for_timeout(400)
+                    page.screenshot(path=str(output/f'{name}-drawing.png'), full_page=True)
                     page.locator('#view-room').click()
                     assert page.locator('#view-room').get_attribute('aria-pressed') == 'true'
+                    for index in range(14):
+                        step = page.locator('.step').nth(index)
+                        expected = step.locator('.step-title').inner_text()
+                        step.click()
+                        assert page.locator('#current-title').inner_text() == expected
+                        assert step.get_attribute('aria-current') == 'step'
+                    assert page.locator('#step-count').inner_text() == '14 / 14'
                     page.locator('#scrub').fill('13')
                     assert page.locator('#current-title').inner_text() == 'Finish with the official manual'
                     page.wait_for_function("document.querySelector('#progress-hardware').textContent.startsWith('82 / 82') && document.querySelector('#progress-panels').textContent.startsWith('11 / 11')",timeout=9000)
                     assert page.locator('#progress-panels').inner_text() == '11 / 11 PANELS'
                     assert page.locator('#schematic rect').count() == 11
+                    page.wait_for_timeout(350)
+                    page.screenshot(path=str(output/f'{name}-assembled.png'), full_page=True)
                     page.locator('#scrub').fill('0')
                     page.wait_for_function("document.querySelector('#progress-hardware').textContent.startsWith('0 / 82') && document.querySelector('#progress-panels').textContent.startsWith('0 / 11')",timeout=9000)
                     assert page.locator('#progress-panels').inner_text() == '0 / 11 PANELS'
@@ -107,7 +120,7 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                         assert page.locator('#viewer').evaluate('(c) => c.width > 0 && c.height > 0')
                     page.screenshot(path=str(output/f'{name}.png'), full_page=True)
                     assert not errors, f'{name} uncaught page exceptions: {errors}'
-                    print(f'{name}: PASS (WebGL2={ready}, 14 states, scrubbing, modes, counters, layout)')
+                    print(f'{name}: PASS (WebGL2={ready}, all 14 states, scrubbing, modes, counters, layout)')
                     page.close()
 
                 fallback = browser.new_page(viewport={'width':390,'height':844})
