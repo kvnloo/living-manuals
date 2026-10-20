@@ -42,7 +42,7 @@ This repo owns **manual understanding, assembly semantics, timeline UX and valid
 
 Input is a manual document or a reference plus an evidence record. An agent may propose `parts[]`, `steps[]`, camera keyframes, and geometry. A deterministic validator checks ID uniqueness, step ownership, dimensions, finite transforms, and referential integrity. A human validates safety-sensitive actions, fit and tolerances before anyone may treat it as authoritative. The output is a versioned `AssemblySpec` plus a 3D replay; unknowns remain unknown rather than being hallucinated.
 
-See [research notes](docs/RESEARCH.md), [roadmap](docs/ROADMAP.md) and [attribution](docs/PROVENANCE.md).
+See the [verified 32-second source video and REA investigation](docs/VERIFIED_REFERENCE.md), [research notes](docs/RESEARCH.md), [roadmap](docs/ROADMAP.md) and [attribution](docs/PROVENANCE.md).
 
 ## License
 
