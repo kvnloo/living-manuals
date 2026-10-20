@@ -77,3 +77,15 @@ The 14-stage study is exploratory UX, **not** the IKEA assembly sequence. Use of
 Feature coverage is tracked in [PARITY.md](PARITY.md). Visual/physical parity
 is **not** achieved by matching control names alone. Never label this a working
 construction plan until source/engineering review gates are met.
+
+## Incremental interaction polish
+
+- [x] Part callout pinned to the projected active 3D part; SVG part selection
+  and dimension inspector. Part labels and dimensions are illustrative.
+- [x] Correct opposing doghouse roof planes (reviewed from real WebGL screenshots).
+- [x] Parametric fence study: 1–8 bays, 6–18 picket shapes/bay, max 178 parts
+  and deterministic step/index bookkeeping, **not** site measurements/BOM.
+- [ ] Validate pinch interactions on a physical touch device; CI exercises the
+  software Chromium mobile viewport but is not a real handheld sensor test.
+- [ ] Add performance/scalability and visual-snapshot budgets on large models;
+  gather independent measurements rather than claim speedups from a green test.

@@ -13,10 +13,10 @@ and no original source art or vendor instructions are included here.
 
 - **Five projects:** BILLY-inspired bookcase (14 stages, 11 panel/82 hardware
   visual placeholders); LACK-inspired table; doghouse concept; fence bay;
-  modular PC workstation concept.
+  modular PC workstation concept. Fence bay count and picket geometry are configurable as visual-only parameters.
 - **3D interaction:** independent WebGL2 rendering, orbit, wheel/pinch zoom,
   scripted camera close-ups, reversible scrub, forward/back and playback.
-  Room and Drawing modes; independently drawn driver/hammer tool cues.
+  Room and Drawing modes; floating active-part labels, click-to-inspect schematic parts, and independently drawn driver/hammer cues.
 - **Manuals:** generated per-step SVG schematic, full-screen step browser with
   click-to-jump, phase/dependency/caution copy, material category counters.
 - **Extensibility:** versioned AssemblySpec v1 JSON import/export, explicit

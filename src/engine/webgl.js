@@ -114,7 +114,7 @@ export function makeViewer(canvas, manual) {
   let theta=.67,phi=1.14,distance=3.7,centerY=1.05,centerX=0,centerZ=0;
   let targetCamera={theta,phi,distance,y:centerY,x:0,z:0};
   const pointers=new Map();
-  let lastX=0,lastY=0,pinchDistance=0,stage=0,mode='room',activeStep=manual.steps[0],elapsed=0,drawCalls=0;
+  let lastX=0,lastY=0,pinchDistance=0,stage=0,mode='room',activeStep=manual.steps[0],elapsed=0,drawCalls=0,latestVP=null;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   function focusStep(step,{immediate=false}={}) {
     activeStep=step;
@@ -179,7 +179,8 @@ export function makeViewer(canvas, manual) {
     // presets; avoid cropping the outer exploded panels on small screens.
     const frameDistance=distance*Math.max(1,Math.min(1.85,1.5/(w/h)));
     const eye=[center[0]+frameDistance*Math.sin(phi)*Math.sin(theta),center[1]+frameDistance*Math.cos(phi),center[2]+frameDistance*Math.sin(phi)*Math.cos(theta)];
-    const vp=multiply(perspective(43*Math.PI/180,w/h,.05,30),lookAt(eye,center));
+    const vp=multiply(perspective(43*Math.PI/180,w/h,.05,80),lookAt(eye,center));
+    latestVP=vp;
     gl.useProgram(p);
     const focus=new Set(activeParts);
     function drawMesh(pose,size,geometry,color,edgeColor,wire=true) {
@@ -247,6 +248,20 @@ export function makeViewer(canvas, manual) {
     }
     gl.bindVertexArray(null);
   }
+  function projectPart(id){
+    const part=manual.parts.find(p=>p.id===id);
+    if(!part || !latestVP || !canvas.clientWidth || !canvas.clientHeight)return null;
+    const point=interpolatePose(part,stage);const m=latestVP;
+    const x=point.x,y=point.y+part.size[1]/2,z=point.z;
+    const clipX=m[0]*x+m[4]*y+m[8]*z+m[12];
+    const clipY=m[1]*x+m[5]*y+m[9]*z+m[13];
+    const w=m[3]*x+m[7]*y+m[11]*z+m[15];
+    if(w<=0)return {visible:false};
+    const nx=clipX/w,ny=clipY/w;
+    return {visible:Number.isFinite(nx)&&Number.isFinite(ny)&&Math.abs(nx)<1.1&&Math.abs(ny)<1.1,
+      x:Math.max(48,Math.min(canvas.clientWidth-48,(nx+1)*canvas.clientWidth/2)),
+      y:Math.max(28,Math.min(canvas.clientHeight-28,(1-ny)*canvas.clientHeight/2))};
+  }
   function destroy() {
     canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointermove',onMove);
     canvas.removeEventListener('pointerup',onUp);canvas.removeEventListener('pointercancel',onUp);
@@ -256,5 +271,5 @@ export function makeViewer(canvas, manual) {
     }
     gl.deleteProgram(p);
   }
-  return {draw,reset:onReset,destroy,focusStep,setMode,metrics:()=>({drawCalls,visibleParts:manual.parts.filter(p=>visibleAtStage(p,stage)).length})};
+  return {draw,reset:onReset,destroy,focusStep,setMode,projectPart,metrics:()=>({drawCalls,visibleParts:manual.parts.filter(p=>visibleAtStage(p,stage)).length})};
 }
