@@ -1,65 +1,68 @@
 # Living Manuals
 
-**Evidence-first, reversible 3D assembly explanations.** An independent, zero-dependency browser study that animates individually tracked panels and illustrative hardware. Inspired by [Ryan Sael's BILLY demo](https://x.com/RyanSael/status/2112178744937103607) ([live original](https://sael.net/flatpack/)).
+**Instructions that come to life — as evidence-first, reversible 3D concept studies.**
 
-## Run
+Explore the anatomy and sequencing of objects through interactive geometry,
+step-by-step camera framing, independent schematic views, a browsable manual
+and tool-motion cues. It is an original open-source experiment inspired by
+[Ryan Sael's interactive flatpack demonstration](https://x.com/RyanSael/status/2112178744937103607)
+([live demo](https://sael.net/flatpack/)); the original creator is credited
+and no original source art or vendor instructions are included here.
 
-```bash
+## What is working
+
+- **Five projects:** BILLY-inspired bookcase (14 stages, 11 panel/82 hardware
+  visual placeholders); LACK-inspired table; doghouse concept; fence bay;
+  modular PC workstation concept.
+- **3D interaction:** independent WebGL2 rendering, orbit, wheel/pinch zoom,
+  scripted camera close-ups, reversible scrub, forward/back and playback.
+  Room and Drawing modes; independently drawn driver/hammer tool cues.
+- **Manuals:** generated per-step SVG schematic, full-screen step browser with
+  click-to-jump, phase/dependency/caution copy, material category counters.
+- **Extensibility:** versioned AssemblySpec v1 JSON import/export, explicit
+  provenance, ordered prerequisites, review gate and bounded geometry.
+- **Accessibility:** keyboard arrows/space/M, CSS reduced motion, native
+  dialog semantics, text/SVG-only fallback if WebGL is unavailable.
+- **No dependencies at runtime:** ES modules + WebGL2. Node 20+ for unit tests;
+  Python 3 + Playwright for browser acceptance (run in GitHub Actions).
+
+## Get started
+
+```sh
 python3 -m http.server 4173
-# Open http://localhost:4173
+# open http://localhost:4173
 npm run check
 ```
 
-No build tool, account, API token, package install, model download, or copied manufacturer assets are required for the runtime. Requires WebGL 2 for the interactive 3D model; an accessible static elevation, operation descriptions, and all navigation remain available when WebGL 2 is unavailable.
+Use the project buttons to switch scenes. `OPEN INTERACTIVE MANUAL` opens the
+independently generated schematic booklet, with jump links to the 3D model.
+`EXPORT SPEC` produces a JSON illustration; `IMPORT JSON` accepts a bounded
+versioned `AssemblySpec` after validation. Data never becomes a verified physical
+plan merely because it renders successfully.
 
-## Implemented
+For a source-backed project, start by reviewing [AssemblySpec v1](docs/ASSEMBLY_SPEC.md)
+then verify **each** material, count, source version, operation, support load,
+and safety prerequisite against the actual vendor/manual or engineered plan.
+A PDF-to-plan workflow is a future gated proposal, not an implemented promise.
 
-- **14 fully reversible illustrated states**, with next/previous, slider, playback, arrow-key navigation, reduced-motion support and deterministic scrub interpolation.
-- **11 parametric panels + 82 separately rendered pieces of hardware** (dowels, connectors, rear fasteners and shelf supports). Both counts are **illustrative demo props**, not the inventory, hole positions or assembly order of any real IKEA product.
-- Procedural box and cylinder geometry in a dependency-free WebGL2 viewer; future hardware stays out of the exploded view until its demonstration step.
-- **Room / Drawing** rendering modes, camera close-up presets by step, free orbit/zoom and reframe.
-- An independent front-elevation SVG generated directly from the authored scene graph, linked to each step without copying manufacturer diagrams.
-- Mobile layout, per-category installation counters, safety warnings and an accessible **no-WebGL fallback**.
-- Deterministic validation for missing/duplicate parts, category/shape errors, invalid cameras, bad transforms and inconsistent installation ownership.
-- Node unit tests and a real-browser Playwright acceptance path that exercises desktop, mobile, no-WebGL and drawing/room modes.
+## Documentation
 
-**Not built:** manufacturer-verified fastener geometry, PDF/image ingestion, real manual diagrams, automatic recognition, glTF, exact original-demo reproduction or safety certification. The sample must never be used to assemble real furniture. Locate the correct manufacturer instructions and wall-anchoring hardware for your specific product.
+- [AssemblySpec and DIY authoring](docs/ASSEMBLY_SPEC.md)
+- [Observed feature coverage and limits](docs/PARITY.md)
+- [Verified source investigation](docs/VERIFIED_REFERENCE.md)
+- [Project roadmap](docs/ROADMAP.md)
+- [Provenance](docs/PROVENANCE.md)
 
-## Verification
+## Safety and licensing
 
-```bash
-npm run check
-# Browser acceptance suite requires Python Playwright + Chromium:
-python3 -m pip install playwright==1.55.0
-python3 -m playwright install chromium
-python3 tests/browser_smoke.py
-```
+Everything shipped here is illustrative; no custom JSON or built-in scene is
+validated for physical use. Furniture requires exact SKU-specific instructions
+and anchoring; doghouses require animal comfort/weather checks; fences require
+boundary/utility/code review; PCs require component, electrical and thermal
+checks. Never use a rendering to override manufacturer safety guidance.
 
-A restricted local browser without WebGL can run a limited UI-only check using `python3 tests/browser_smoke.py --inline --allow-no-webgl`; this **does not verify 3D output**. The [dedicated CI workflow](.github/workflows/browser.yml) requires real WebGL2 and exports desktop/mobile screenshots. Reference research is independently recorded in [docs/VERIFIED_REFERENCE.md](docs/VERIFIED_REFERENCE.md) and in [the reproducible Actions investigation](.github/workflows/reference-investigation.yml). Agent Reach's anonymous X backend was not authenticated; the public video was retrieved via `yt-dlp` and the live website inspected with REA/CDP. Credit belongs to original creator **Ryan Sael**.
-
-## Architecture
-
-| Area | Contract |
-|---|---|
-| `src/catalog/billy.js` | Illustrative source-labeled geometry, inventory and camera keyframes; *not* vendor data |
-| `src/core/assembly.js` | Deterministic validation, category counters, visibility and interpolation |
-| `src/core/elevation.js` | Independent vector schematic from authored geometry |
-| `src/core/matrix.js` | Self-contained column-major matrix math |
-| `src/engine/webgl.js` | Box/cylinder rendering, camera and drawing/room modes |
-| `src/main.js` | Timeline controls, accessible DOM and fallback coordination |
-| `tests/` | Unit invariants and full-browser acceptance with intentional WebGL failure |
-| `docs/` | Evidence and provenance, human safety gates and remaining roadmap |
-
-## Why its own repo?
-
-Living Manuals owns **assembly semantics, verification and interaction UX**. Geometry is a replaceable subsystem. A future provider can use [img2threejs](https://github.com/kvnloo/img2threejs), user-licensed glTF/CAD or explicit procedural primitives, after geometry/provenance review. No proprietary original implementation or assembly drawings are copied.
-
-## Manual ingestion (planned)
-
-Document -> candidate BOM and geometry -> evidence-tagged dependency graph -> deterministic validation -> human review of ambiguous or safety-related steps -> versioned `AssemblySpec` -> interactive guide. Unknowns remain unknown; a polished scene cannot certify assembly correctness.
-
-See [research](docs/RESEARCH.md), [roadmap](docs/ROADMAP.md) and [attribution](docs/PROVENANCE.md).
-
-## License
-
-MIT. Copyright 2026 Living Manuals contributors.
+Our original code is MIT licensed (see [LICENSE](LICENSE)). The project does
+not grant a license to IKEA manuals or models, Ryan Sael's demonstration, or
+any other third-party artwork. No reference video, cookies or private capture
+is committed here. Open source contributions should retain original author
+attribution and source provenance.
