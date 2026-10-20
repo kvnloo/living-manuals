@@ -68,8 +68,8 @@ function doghouseStudy(){
     part('lintel','Entrance lintel','panel',[.56,.19,.05],pose(0,.805,.44),4,{start:pose(0,1.46,.89)})
   ];
   const roof=[
-    part('roof-left','Roof plane left','panel',[.82,.04,1.09],pose(-.29,1.07,0,0,-.6),6,{start:pose(-1.14,1.58,0,0,-.6),tone:'roof'}),
-    part('roof-right','Roof plane right','panel',[.82,.04,1.09],pose(.29,1.07,0,0,.6),6,{start:pose(1.14,1.58,0,0,.6),tone:'roof'})
+    part('roof-left','Roof plane left','panel',[.82,.04,1.09],pose(-.29,1.07,0,0,.6),6,{start:pose(-1.14,1.58,0,0,.6),tone:'roof'}),
+    part('roof-right','Roof plane right','panel',[.82,.04,1.09],pose(.29,1.07,0,0,-.6),6,{start:pose(1.14,1.58,0,0,-.6),tone:'roof'})
   ];
   const runners=[-1,1].map((v,i)=>part(`runner-${i+1}`,`Floor support ${i+1}`,'fixture',[.06,.12,.94],pose(v*.42,.025,0),1,{start:pose(v*.9,.22,.72),tone:'wood'}));
   const frame=[floor,...sides,...entrance,...roof,...runners];
@@ -86,23 +86,45 @@ function doghouseStudy(){
   return meta('doghouse-concept','Doghouse concept','architecture',{width:1.15,height:1.4,depth:1.1},frame,steps,{shortTitle:'DOGHOUSE',description:'From foundation through enclosure to roofing, with independent safety review.'});
 }
 
-function fenceStudy(){
-  const posts=[-1.3,0,1.3].map((x,i)=>part(`post-${i+1}`,`Fence post ${i+1}`,'fixture',[.115,1.65,.115],pose(x,.825,0),2,{start:pose(x,.825,-.7)}));
-  const rails=[.44,1.18].flatMap((y,j)=>[-.65,.65].map((x,i)=>part(`rail-${j+1}-${i+1}`,`Horizontal rail ${j+1}.${i+1}`,'panel',[1.3,.085,.06],pose(x,y,-.06),3,{start:pose(x,y+.45,.74)})));
-  const pickets=Array.from({length:18},(_,i)=>part(`picket-${i+1}`,`Picket ${i+1}`,'panel',[.125,1.35,.038],pose(-1.275+i*.15,.74,.08),i<9?4:5,{start:pose(-1.275+i*.15,.74,.55+(i%3)*.07)}));
+/** Generates an illustrative fence section with up to eight schematic bays.
+ *  This computes only rendering geometry, NOT post foundations, setbacks,
+ *  permitted height, wind loads, or construction quantities.
+ */
+export function createFenceStudy({bays=2,picketsPerBay=9}={}){
+  if(!Number.isInteger(bays)||bays<1||bays>8)throw new RangeError('Fence bays must be an integer from 1 to 8');
+  if(!Number.isInteger(picketsPerBay)||picketsPerBay<6||picketsPerBay>18)throw new RangeError('Pickets per bay must be an integer from 6 to 18');
+  const span=1.3,width=bays*span,postXs=Array.from({length:bays+1},(_,i)=>-width/2+i*span);
+  const frameDistance=Math.max(3.2,width*.89+1.1);
+  const cameraFor=(theta=.6,phi=1.14,offset=.0)=>camera(theta,phi,frameDistance+offset,.8);
+  const posts=postXs.map((x,i)=>part(`post-${i+1}`,`Fence post ${i+1}`,'fixture',[.115,1.65,.115],pose(x,.825,0),2,{start:pose(x,.825,-.7)}));
+  const rails=[.44,1.18].flatMap((y,j)=>Array.from({length:bays},(_,i)=>{
+    const x=(postXs[i]+postXs[i+1])/2;
+    return part(`rail-${j+1}-${i+1}`,`Horizontal rail ${j+1}.${i+1}`,'panel',[span-.03,.085,.06],pose(x,y,-.06),3,{start:pose(x,y+.45,.74)});
+  }));
+  const spacing=span/picketsPerBay;
+  const pickets=Array.from({length:bays*picketsPerBay},(_,i)=>{
+    const bay=Math.floor(i/picketsPerBay),slot=i%picketsPerBay;
+    const x=postXs[bay]+(slot+.5)*spacing;
+    return part(`picket-${i+1}`,`Picket ${i+1}`,'panel',[Math.min(.125,spacing*.86),1.35,.038],
+      pose(x,.74,.08),i<Math.ceil(bays*picketsPerBay/2)?4:5,
+      {start:pose(x,.74,.55+(i%3)*.07)});
+  });
   const caps=posts.map((p,i)=>part(`cap-${i+1}`,`Post cap ${i+1}`,'fixture',[.145,.04,.145],pose(p.end.x,1.66,0),6,{start:pose(p.end.x,2.06,.3)}));
   const parts=[...posts,...rails,...pickets,...caps];
+  const split=Math.ceil(pickets.length/2);
   const steps=[
-    stage('scope','Review boundaries and permits',[],{phase:'Plan',camera:camera(.58,1.21,6.5,.9),safety:true,caution:'Do not dig or build from this animation. Check property boundaries, permits, setbacks and utility locating.'}),
-    stage('survey','Plan the alignment corridor',[],{phase:'Plan',camera:camera(.5,1.28,6.7,.5),caution:'Utility and boundary clearance must be independently verified.'}),
-    stage('posts','Study the post grid',posts,{phase:'Supports',camera:camera(.62,1.17,6.6,.8),requires:['scope','survey'],caution:'No embedment depth, soil or footing design is represented.'}),
-    stage('rails','Visualize rail spans',rails,{phase:'Structure',tool:tool('driver','rail-1-1','align'),camera:camera(.78,1.14,6.3,.84),requires:['posts']}),
-    stage('first-half','Preview initial pickets',pickets.slice(0,9),{phase:'Cladding',tool:tool('driver','picket-1','align'),camera:camera(.55,1.13,5.7,.82),requires:['rails']}),
-    stage('second-half','Complete the visual rhythm',pickets.slice(9),{phase:'Cladding',camera:camera(.52,1.14,6.2,.8),requires:['first-half']}),
-    stage('caps','Preview post tops',caps,{phase:'Finish',camera:camera(.66,1.1,6.3,.9),requires:['second-half']}),
-    stage('review','Verify regulations and structure',[],{phase:'Review',camera:camera(.65,1.16,6.8,.8),safety:true,caution:'Fence footing and wind loads depend on local codes, site, climate and materials. An engineered or permitted plan may be required.'})
+    stage('scope','Review boundaries and permits',[],{phase:'Plan',camera:cameraFor(.58,1.21,.2),safety:true,caution:'Do not dig or build from this animation. Check property boundaries, permits, setbacks and utility locating.'}),
+    stage('survey','Plan the alignment corridor',[],{phase:'Plan',camera:cameraFor(.5,1.28,.2),caution:'Utility and boundary clearance must be independently verified.'}),
+    stage('posts','Study the post grid',posts,{phase:'Supports',camera:cameraFor(.62,1.17),requires:['scope','survey'],caution:'No embedment depth, soil or footing design is represented.'}),
+    stage('rails','Visualize rail spans',rails,{phase:'Structure',tool:tool('driver','rail-1-1','align'),camera:cameraFor(.78,1.14,-.1),requires:['posts']}),
+    stage('first-half','Preview initial pickets',pickets.slice(0,split),{phase:'Cladding',tool:tool('driver','picket-1','align'),camera:cameraFor(.55,1.13,-.1),requires:['rails']}),
+    stage('second-half','Complete the visual rhythm',pickets.slice(split),{phase:'Cladding',camera:cameraFor(.52,1.14),requires:['first-half']}),
+    stage('caps','Preview post tops',caps,{phase:'Finish',camera:cameraFor(.66,1.1),requires:['second-half']}),
+    stage('review','Verify regulations and structure',[],{phase:'Review',camera:cameraFor(.65,1.16,.2),safety:true,caution:'Fence footing and wind loads depend on local codes, site, climate and materials. An engineered or permitted plan may be required.'})
   ];
-  return meta('fence-concept','Fence panel concept','outdoor',{width:2.72,height:1.68,depth:.18},parts,steps,{shortTitle:'FENCE',description:'One schematic fence bay, not a surveyed property installation.'});
+  return meta('fence-concept',`Fence concept · ${bays} ${bays===1?'bay':'bays'}`,'outdoor',
+    {width:width+.12,height:1.68,depth:.18},parts,steps,
+    {shortTitle:'FENCE',description:`${bays} illustrative bays with ${picketsPerBay} picket shapes each; not a surveyed property installation.`});
 }
 
 function pcStudy(){
@@ -120,8 +142,8 @@ function pcStudy(){
   const fans=[0,1].map(i=>part(`fan-${i+1}`,`Chassis fan ${i+1}`,'component',[.105,.105,.021],pose(i?.11:-.11,.34,.13),8,{tone:'steel',start:pose(i?.39:-.38,.31,.6)}));
   const parts=[...frame,board,processor,...ram,cooler,psu,gpu,...fans];
   const steps=[
-    stage('overview','Inspect the workstation build',[],{phase:'Plan',camera:camera(.7,1.13,1.8,.28),caution:'Verify component compatibility, PSU sizing and ESD controls before handling real parts.'}),
-    stage('case','Study chassis clearances',frame,{phase:'Chassis',camera:camera(.65,1.14,1.8,.3)}),
+    stage('overview','Inspect the workstation build',[],{phase:'Plan',camera:camera(.7,1.13,1.43,.28),caution:'Verify component compatibility, PSU sizing and ESD controls before handling real parts.'}),
+    stage('case','Study chassis clearances',frame,{phase:'Chassis',camera:camera(.65,1.14,1.48,.3)}),
     stage('board','Review board mounting',[board],{phase:'Mainboard',tool:tool('driver','motherboard','align'),camera:camera(.93,1.13,1.22,.28),requires:['case']}),
     stage('socket','Inspect the CPU socket',[processor],{phase:'Mainboard',camera:camera(.8,1.17,1.05,.31),requires:['board'],caution:'Socket-specific alignment and retention mechanisms require the official motherboard/CPU manuals.'}),
     stage('memory','Preview dual memory modules',ram,{phase:'Mainboard',camera:camera(.85,1.08,1.12,.32),requires:['socket']}),
@@ -129,10 +151,10 @@ function pcStudy(){
     stage('power','Locate power enclosure',[psu],{phase:'Power',camera:camera(.77,1.15,1.55,.2),requires:['case'],caution:'Never open a PSU; disconnect power before working.'}),
     stage('graphics','Preview graphics expansion',[gpu],{phase:'Expansion',tool:tool('driver','gpu','align'),camera:camera(.83,1.18,1.27,.23),requires:['board','power']}),
     stage('airflow','Check intake and exhaust geometry',fans,{phase:'Cooling',camera:camera(.64,1.1,1.58,.31),requires:['cooling']}),
-    stage('review','Verify the hardware manuals',[],{phase:'Review',camera:camera(.67,1.18,1.8,.29),safety:true,caution:'Check compatibility, ESD, thermal limits, power disconnection, torque and wiring against manufacturer guidance.'}),
+    stage('review','Verify the hardware manuals',[],{phase:'Review',camera:camera(.67,1.18,1.43,.29),safety:true,caution:'Check compatibility, ESD, thermal limits, power disconnection, torque and wiring against manufacturer guidance.'}),
   ];
   return meta('pc-concept','PC workstation concept','electronics',{width:.43,height:.52,depth:.3},parts,steps,{shortTitle:'PC BUILD',description:'A spatial component study; no connectors or electrical procedures are asserted.'});
 }
 
-export const projects=[bookcase,tableStudy(),doghouseStudy(),fenceStudy(),pcStudy()];
+export const projects=[bookcase,tableStudy(),doghouseStudy(),createFenceStudy(),pcStudy()];
 export const projectById=id=>projects.find(p=>p.id===id);

@@ -83,3 +83,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,canvas:focus-visible{ou
 @media(max-width:1200px){.project-selector{grid-template-columns:1fr 2fr;gap:11px 20px}.project-io{grid-column:2}}
 @media(max-width:900px){.project-selector{grid-template-columns:1fr;gap:10px;padding:14px 18px}.project-selector p{max-width:unset}.project-io{grid-column:auto}.project-option{font-size:9px;padding:10px}}
 @media(max-width:760px){.manual-dialog-head{padding:16px}.manual-dialog-list{grid-template-columns:1fr;padding:12px}.manual-card{padding:14px}.manual-card svg{height:120px}.manual-dialog-footer{padding:12px 16px}}
+.part-callout{position:absolute;z-index:4;transform:translate(-50%,-110%);pointer-events:auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;max-width:min(200px,45vw);min-width:100px;padding:7px 10px;background:#20382cdb;color:#f8fff7;border:1px solid #aacb9b8c;box-shadow:0 5px 23px #15201527;border-radius:5px;text-align:left;transition:opacity .16s}
+.part-callout[hidden]{display:none}
+.part-callout:after{content:'';position:absolute;bottom:-5px;left:calc(50% - 4px);width:8px;height:8px;background:#20382c;transform:rotate(45deg)}
+.part-callout span{font-size:10px;font-weight:750;line-height:1.3}.part-callout small{font-size:8px;letter-spacing:.05em;color:#b5e8a3}
+.part-callout:hover{background:#314c39}
+.part-inspector{display:flex;flex-direction:column;gap:4px;border-left:3px solid #8dbd70;background:#f0f5e9;padding:8px 11px;max-width:420px}
+.part-inspector[hidden]{display:none}.part-inspector strong{font-size:11px}.part-inspector>span:last-child{font-size:10px;color:#65735f}
+@media(prefers-reduced-motion:reduce){.part-callout{transition:none}}
+.project-parameters{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-top:1px solid #e2eade;padding:12px 0 0}
+.project-parameters[hidden]{display:none}
+.project-parameters .overline{margin-right:10px;font-size:8px}
+.project-parameters label,.parameter-count{font-size:10px;color:#637460;white-space:nowrap;font-weight:700}
+.project-parameters label strong{color:#334c32;margin-left:4px}
+.project-parameters input[type=range]{width:92px;accent-color:#5f8a48}
+.parameter-count{margin-left:auto;color:#a1a99d}
+@media(max-width:760px){.project-parameters{gap:8px}.project-parameters .overline{flex-basis:100%}.parameter-count{margin-left:0;flex-basis:100%}}

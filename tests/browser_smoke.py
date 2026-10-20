@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import base64
 import functools
+import json
 import http.server
 import re
 import threading
@@ -89,6 +90,13 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                     page.locator('#next').click()
                     assert page.locator('#current-title').inner_text() == 'Locate the dowels'
                     assert page.locator('#schematic circle').count() == 12
+                    page.locator('#schematic circle').last.click()
+                    assert page.locator('#part-inspector').is_visible()
+                    assert 'dowel' in page.locator('#part-inspector-name').inner_text().lower()
+                    if ready == 'true':
+                        page.wait_for_function("document.querySelector('#part-callout')?.hidden === false",timeout=9000)
+                        page.locator('#part-callout').click()
+                        assert page.locator('#part-inspector').is_visible()
                     page.locator('#view-drawing').click()
                     assert page.locator('#view-drawing').get_attribute('aria-pressed') == 'true'
                     assert page.evaluate('document.body.dataset.viewMode') == 'drawing'
@@ -160,6 +168,28 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                         page.wait_for_function("""() => Array.from(document.querySelectorAll('.inventory-counters span')).every(el => el.textContent.trim().startsWith('0 / '))""", timeout=9000)
                         assert page.evaluate('document.documentElement.scrollWidth') <= width, f'{name}/{study} horizontal scroll'
                         assert page.evaluate('document.body.dataset.renderReady') == ready
+                        if study == 'fence-concept':
+                            assert page.locator('#fence-parameters').is_visible()
+                            page.locator('#fence-bays').fill('8')
+                            page.locator('#fence-pickets').fill('18')
+                            assert page.locator('#fence-geometry-count').inner_text().startswith('144')
+                            assert page.locator('#step-count').inner_text() == '01 / 08'
+                            page.locator('#scrub').fill('7')
+                            page.wait_for_function("document.querySelector('#progress-panels').textContent.startsWith('160 / 160')", timeout=9000)
+                            # 8 bays x 18 pickets + 16 rails = 160 panels.
+                            assert page.locator('#progress-panels').inner_text() == '160 / 160 PANELS'
+                            assert page.evaluate('document.documentElement.scrollWidth') <= width
+                            if ready == 'true':
+                                perf=page.evaluate('window.livingManualsDiagnostics.metrics()')
+                                assert perf and perf['visibleParts'] >= 178
+                                assert perf['drawCalls'] >= perf['visibleParts']
+                                print(f'{name}: 8-bay fence WebGL drawCalls={perf["drawCalls"]}, visibleParts={perf["visibleParts"]}')
+                            page.screenshot(path=str(output/f'{name}-fence-expanded.png'),full_page=True)
+                            page.locator('[data-project-id="table-concept"]').click()
+                            page.locator('[data-project-id="fence-concept"]').click()
+                            assert page.locator('#fence-geometry-count').inner_text().startswith('144')
+                            assert page.locator('#fence-bays').input_value() == '8'
+                            assert page.locator('#fence-pickets').input_value() == '18' 
                     # Export a concept then import it through the same guarded UI.
                     with page.expect_download() as download_info:
                         page.locator('#export-project').click()
@@ -167,13 +197,17 @@ def run(inline: bool, allow_no_webgl: bool, output: Path) -> None:
                     exported = output/f'{name}-export.json'
                     download.save_as(exported)
                     assert 'illustrative' in exported.read_text().lower()
+                    candidate=json.loads(exported.read_text())
+                    candidate['id']='user-import-test'
+                    candidate['title']='User-owned concept study'
+                    exported.write_text(json.dumps(candidate))
                     page.locator('#import-project').set_input_files(str(exported))
-                    assert 'UNVERIFIED' in page.locator('#project-message').inner_text()
+                    page.wait_for_function("document.getElementById('project-message').textContent.includes('UNVERIFIED')",timeout=7000)
                     page.locator('#import-project').set_input_files({
                         'name': 'invalid.json', 'mimeType': 'application/json',
                         'buffer': b'{"schemaVersion":1,"review":{"status":"verified"}}'
                     })
-                    assert 'rejected' in page.locator('#project-message').inner_text().lower()
+                    page.wait_for_function("document.getElementById('project-message').textContent.toLowerCase().includes('rejected')",timeout=7000)
                     page.locator('[data-project-id="bookcase-study-v2"]').click()
                     assert not errors, f'{name} uncaught page exceptions: {errors}' 
                     print(f'{name}: PASS (WebGL2={ready}, all 14 states, scrubbing, modes, counters, layout)')

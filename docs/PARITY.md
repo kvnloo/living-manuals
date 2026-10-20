@@ -12,9 +12,9 @@ manual pages, room assets or IKEA models. [Source evidence](VERIFIED_REFERENCE.m
 | --- | --- | --- |
 | Multi-step BILLY timeline (14 stages) | **Yes**: reversible indexed interpolation and animated playback | Illustrative step contents; not vendor operations |
 | Two product options (BILLY, LACK) | **Yes**: BILLY and LACK-inspired independent model; also doghouse, fence, PC | LACK dimensions/parts not vendor verified |
-| Panel and hardware counters | **Yes**: per-category individual part instances and time-based counts | 11/82 are parity placeholders, not IKEA bill of materials |
+| Panel and hardware counters | **Yes**: per-category individual part instances, time-based counts and configurable fence bays | 11/82 are parity placeholders, not IKEA bill of materials |
 | Room and Drawing switches | **Yes**: warm procedural context plus technical high contrast | Not photorealistic or physically identical to the reference room |
-| Close-up cameras per operation | **Yes**: scripted camera framing, orbit/reset, wheel/pinch zoom | Authored viewpoints approximate the source's behavior |
+| Close-up cameras per operation | **Yes**: scripted camera framing, projected labels, part inspector, orbit/reset, wheel/pinch zoom | Authored viewpoints approximate the source's behavior |
 | Animated small connectors | **Yes**: separate box/cylinder fasteners | Connector locations do not assert real drilling or tightening locations |
 | Animated tools beside connectors | **Yes**: driver/hammer/drill visual props tied to the active step | Motion is a teaching cue, not actual safe tool usage |
 | Manual thumbnail and expanded manual | **Yes**: generated per-stage 2D vector schematic and full-screen browsable overlay | No original IKEA drawings may be reproduced without permission |

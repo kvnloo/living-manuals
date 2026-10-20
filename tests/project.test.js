@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {projects,projectById} from '../src/catalog/projects.js';
+import {projects,projectById,createFenceStudy} from '../src/catalog/projects.js';
 import {validateProject,importProjectJSON,exportProjectJSON,projectPhases,stepPrerequisites} from '../src/core/project.js';
 import {inventoryAtStage,installationFraction,interpolatePose,installedCount} from '../src/core/assembly.js';
 import {elevationPrimitives} from '../src/core/elevation.js';
@@ -96,4 +96,21 @@ test('representative large projects include explicit safety gates and phase depe
   }
   assert.ok(projectById('fence-concept').steps[0].caution.includes('utility'));
   assert.ok(projectById('pc-concept').steps.some(s=>s.caution?.includes('PSU')));
+});
+
+test('fence generator scales across small and multi-bay studies without unreviewed construction claims',()=>{
+  for(const bays of [1,2,3,8])for(const picketsPerBay of [6,9,18]){
+    const p=createFenceStudy({bays,picketsPerBay});
+    assert.deepEqual(validateProject(p),[],`bays=${bays}, pickets=${picketsPerBay}`);
+    assert.equal(p.parts.filter(part=>part.id.startsWith('picket-')).length,bays*picketsPerBay);
+    assert.equal(p.parts.filter(part=>part.id.startsWith('post-')).length,bays+1);
+    assert.equal(p.parts.filter(part=>part.id.startsWith('rail-')).length,bays*2);
+    assert.equal(p.parts.length,bays*picketsPerBay+2*(bays+1)+2*bays);
+    assert.equal(p.steps.length,8);
+    assert.equal(p.review.requiresHumanApproval,true);
+    assert.equal(installedCount(p,7),p.parts.length);
+    assert.ok(exportProjectJSON(p).includes('"status": "illustrative"'));
+  }
+  for(const value of [0,-1,9,2.5,NaN,Infinity,'3'])assert.throws(()=>createFenceStudy({bays:value}),RangeError);
+  for(const value of [0,5,19,9.3,NaN,Infinity,'9'])assert.throws(()=>createFenceStudy({picketsPerBay:value}),RangeError);
 });

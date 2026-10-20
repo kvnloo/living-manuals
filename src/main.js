@@ -1,4 +1,4 @@
-import {projects,projectById} from './catalog/projects.js';
+import {projects,projectById,createFenceStudy} from './catalog/projects.js';
 import {validateProject,importProjectJSON,exportProjectJSON,stepPrerequisites} from './core/project.js';
 import {inventoryAtStage,activeStepIndex,clamp} from './core/assembly.js';
 import {elevationPrimitives} from './core/elevation.js';
@@ -12,6 +12,7 @@ const picker=$('project-picker');
 const labels={panel:'PANELS',hardware:'HARDWARE',fixture:'STRUCTURE',component:'COMPONENTS',material:'MATERIALS'};
 let manual=projects[0],target=0,current=0,playing=false,lastTime=null,playDwell=0,selected=0,viewer=null,buttons=[];
 let sceneMode='room';
+const fenceSettings={bays:2,picketsPerBay:9};
 const $status=$('project-message');
 function status(message='',error=false){
   $status.hidden=!message;$status.textContent=message;
@@ -28,6 +29,7 @@ function makeSvgElement(primitive){
   for(const [key,value] of Object.entries(primitive)){
     if(!['type','id','active','ghost'].includes(key))element.setAttribute(key,String(value));
   }
+  element.dataset.part=primitive.id;
   element.classList.add('elevation-shape',primitive.active?'is-highlight':primitive.ghost?'is-ghost':'is-installed');
   return element;
 }
@@ -48,6 +50,7 @@ function renderElevation(){
   $('operation-prerequisites').textContent=prereqs.length ?
     `Earlier context: ${prereqs.map(r=>manual.steps[r.index].title).join(' · ')}`:
     `Phase: ${step.phase??'Explore'} · ${manual.review.status.toUpperCase()} STUDY`;
+  $('part-inspector').hidden=true;
   const cue=$('tool-cue');cue.hidden=!step.tool;
   if(step.tool)cue.textContent=`3D ${(step.tool.kind==='driver'?'screwdriver':step.tool.kind)} cue — motion and alignment only, never a torque or tool-use instruction.`;
 }
@@ -118,9 +121,9 @@ function buildPicker(){
     const b=document.createElement('button');b.type='button';b.className='project-option';
     b.textContent=project.shortTitle??project.title;b.dataset.projectId=project.id;
     b.title=project.description??project.subtitle;b.setAttribute('aria-pressed',String(project.id===manual.id));
-    b.addEventListener('click',()=>activateProject(project));picker.append(b);
+    b.addEventListener('click',()=>activateProject(project.id==='fence-concept'?createFenceStudy(fenceSettings):project));picker.append(b);
   }
-  if(!projects.includes(manual)){
+  if(!projects.some(p=>p.id===manual.id)){
     const b=document.createElement('button');b.type='button';b.className='project-option';
     b.textContent=manual.shortTitle??manual.title;b.dataset.projectId=manual.id;b.setAttribute('aria-pressed','true');
     b.addEventListener('click',()=>activateProject(manual));picker.append(b);
@@ -143,6 +146,9 @@ function applyMeta(){
   $('viewer').setAttribute('aria-label',`Interactive 3D concept model for ${p.title}; drag or use two fingers to orbit and zoom`);
   $('source-manual-link').href=safeExternal(p.source?.url);
   $('source-manual-link').textContent=`Source / ${p.source?.creator??'contributors'} ↗`;
+  const isFence=p.id==='fence-concept';
+  $('fence-parameters').hidden=!isFence;
+  if(isFence)$('fence-geometry-count').textContent=`${p.parts.filter(x=>x.id.startsWith('picket-')).length} sample pickets · not a materials estimate`;
   buildPicker();buildSteps();makeCounterItems();
 }
 function activateProject(next){
@@ -163,7 +169,7 @@ function activateProject(next){
     $('render-error').hidden=false;$('viewer-fallback').hidden=false;
   }
   document.body.dataset.project=manual.id;
-  document.body.dataset.step='0';
+  document.body.dataset.step='0';$('part-callout').hidden=true;
   updateUI();return true;
 }
 function openManual(){
@@ -186,6 +192,33 @@ function openManual(){
   }
   dialog.showModal();
 }
+let pinnedPartId='';
+function inspectPart(id){
+  const part=manual.parts.find(p=>p.id===id);
+  if(!part)return;
+  pinnedPartId=part.id;
+  $('part-inspector-name').textContent=part.label;
+  $('part-inspector-dimensions').textContent=`${part.kind} · ${part.size.map(fmtCm).join(' × ')} cm (estimated) · scene ID ${part.id}`;
+  $('part-inspector').hidden=false;
+}
+$('part-callout').addEventListener('click',()=>inspectPart(pinnedPartId));
+$('schematic').addEventListener('click',e=>{
+  const id=e.target?.dataset?.part;if(id)inspectPart(id);
+});
+function updateCallout(){
+  const step=manual.steps[selected];
+  const first=step.parts?.[0];
+  const targetPart=first && manual.parts.find(p=>p.id===first);
+  const position=viewer?.projectPart(first);
+  const b=$('part-callout');
+  if(!targetPart || !position?.visible || step.safety){b.hidden=true;return;}
+  pinnedPartId=first;
+  b.hidden=false;
+  b.style.left=`${position.x}px`;
+  b.style.top=`${position.y}px`;
+  $('part-callout-label').textContent=targetPart.label;
+  $('part-callout-extra').textContent=(step.parts.length>1?`+${step.parts.length-1} related shapes`:'VIEW DETAILS');
+}
 $('manual-open').addEventListener('click',openManual);
 $('prev').addEventListener('click',()=>selectStep(selected-1));
 $('next').addEventListener('click',()=>selectStep(selected+1));
@@ -207,6 +240,16 @@ for(const mode of ['room','drawing']){
     for(const m of ['room','drawing'])$(`view-${m}`).setAttribute('aria-pressed',String(m===mode));
   });
 }
+function updateFenceParameters(){
+  const bays=Number($('fence-bays').value),picketsPerBay=Number($('fence-pickets').value);
+  fenceSettings.bays=bays;fenceSettings.picketsPerBay=picketsPerBay;
+  $('fence-bays-value').textContent=String(bays);
+  $('fence-pickets-value').textContent=String(picketsPerBay);
+  try{if(activateProject(createFenceStudy({bays,picketsPerBay})))status('Regenerated illustrative fence geometry. Site plans and materials remain unverified.');}
+  catch(error){status(error.message,true);}
+}
+$('fence-bays').addEventListener('input',updateFenceParameters);
+$('fence-pickets').addEventListener('input',updateFenceParameters);
 $('export-project').addEventListener('click',()=>{
   try{
     const data=exportProjectJSON(manual);
@@ -221,6 +264,7 @@ $('import-project').addEventListener('change',async e=>{
   try{
     if(file.size>1_000_000)throw new Error('JSON must be smaller than 1 MB');
     const project=importProjectJSON(await file.text());
+    if(projects.some(p=>p.id===project.id))throw new Error('Imported project ID matches a built-in study; use a unique ID');
     if(activateProject(project))status(`Imported ${project.title} as an UNVERIFIED concept; independent review required.`);
   }catch(error){status(`Import rejected: ${error.message}`,true);}
   finally{e.target.value='';}
@@ -251,7 +295,7 @@ function frame(timestamp){
   current+=(target-current)*blend;
   if(Math.abs(target-current)<.002)current=target;
   viewer?.draw(current,manual.steps[selected].parts,dt,manual.steps[selected]);
-  updateProgress();
+  updateCallout();updateProgress();
   document.body.dataset.step=String(selected);
   requestAnimationFrame(frame);
 }
@@ -259,3 +303,10 @@ const query=new URLSearchParams(location.search);
 const initial=projectById(query.get('project'))??projects[0];
 activateProject(initial);
 requestAnimationFrame(frame);
+
+// Read-only diagnostics for reproducible browser and performance smoke runs.
+// Not an API for approving physical construction or claiming source parity.
+Object.defineProperty(window,'livingManualsDiagnostics',{value:Object.freeze({
+  metrics:()=>viewer?.metrics()??null,
+  project:()=>({id:manual.id,step:selected,partCount:manual.parts.length,review:manual.review.status}),
+})});
