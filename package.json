@@ -1,0 +1,13 @@
+{
+  "name": "living-manuals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-first, interactive 3D assembly guides with a deterministic step engine.",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/core/assembly.js && node --check src/core/matrix.js && node --check src/catalog/billy.js && node --check src/engine/webgl.js && node --check src/main.js && npm test"
+  },
+  "engines": {"node": ">=20"}
+}
